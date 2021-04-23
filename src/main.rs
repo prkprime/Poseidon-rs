@@ -2,8 +2,8 @@ use base64;
 use hyper::{body, Body, Client, Method, Request};
 use hyper_tls::HttpsConnector;
 use serde::Deserialize;
-use uuid::Uuid;
-
+// use uuid::Uuid;
+use tesseract;
 #[derive(Debug, Deserialize)]
 struct CaptchaData {
     pub d: String,
@@ -23,9 +23,12 @@ async fn get_erp_data() -> Result<(), Box<dyn std::error::Error + Send + Sync>> 
     let data = body::to_bytes(resp).await?;
     let captcha_data: CaptchaData = serde_json::from_slice(&data).unwrap();
     let image_vector = base64::decode(captcha_data.d).unwrap();
-    let filename = format!("{}.png", Uuid::new_v4().to_string());
-    std::fs::write(&filename, image_vector).unwrap();
-
+    // let filename = format!("{}.png", Uuid::new_v4().to_string());
+    // std::fs::write(&filename, &image_vector).unwrap();
+    let loki = tesseract::Tesseract::new_with_oem(None, Some("eng"), tesseract::OcrEngineMode::Default).unwrap();
+    let captcha_string = loki.set_image_from_mem(&image_vector).unwrap().get_text().unwrap();
+    println!("captcha : {}", captcha_string);
+    // std::fs::remove_file(&filename).unwrap();
     Ok(())
 }
 
