@@ -1,6 +1,8 @@
+use base64;
 use hyper::{body, Body, Client, Method, Request};
 use hyper_tls::HttpsConnector;
 use serde::Deserialize;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 struct CaptchaData {
@@ -20,7 +22,10 @@ async fn get_erp_data() -> Result<(), Box<dyn std::error::Error + Send + Sync>> 
     let resp = client.request(r).await?;
     let data = body::to_bytes(resp).await?;
     let captcha_data: CaptchaData = serde_json::from_slice(&data).unwrap();
-    println!("{}", captcha_data.d);
+    let image_vector = base64::decode(captcha_data.d).unwrap();
+    let filename = format!("{}.png", Uuid::new_v4().to_string());
+    std::fs::write(&filename, image_vector).unwrap();
+
     Ok(())
 }
 
